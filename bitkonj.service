@@ -1,0 +1,12 @@
+[Unit]
+Description=bitkonj
+After=syslog.target network.target
+
+[Service]
+User=percolant
+Group=sudo
+WorkingDirectory=/opt/bitkonj
+ExecStart=python ./bitkonj
+
+[Install]
+WantedBy=multi-user.target
