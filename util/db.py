@@ -1,20 +1,21 @@
 import os
 import sys
 import datetime
-from sqlalchemy import Column, ForeignKey, Integer, String, DateTime
+from sqlalchemy import Column, ForeignKey, Integer, String, DateTime, func
 from sqlalchemy_utils import ChoiceType
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship, sessionmaker
 from sqlalchemy import create_engine
+from . import vars
 
 Base = declarative_base()
 
-class Tick(Base):
-    COIN_TYPES = [
-        ('btc', 'BTC'),
-        ('eth', 'ETH')
-    ]
+COIN_TYPES = [
+    ('btc', 'BTC'),
+    ('eth', 'ETH')
+]
 
+class Tick(Base):
     DIR_TYPES = [
         ('rise', 'rise'),
         ('drop', 'drop'),
@@ -28,13 +29,40 @@ class Tick(Base):
     timestamp = Column(DateTime, default=datetime.datetime.utcnow)
     direction = Column(ChoiceType(DIR_TYPES), nullable=False)
 
+class Order(Base):
+    OPERATION_TYPES = [
+        ('buy', 'buy'),
+        ('sell', 'sell')
+    ]
+
+    __tablename__ = 'order'
+    id = Column(Integer, primary_key=True)
+    price = Column(Integer, nullable=False)
+    coin = Column(ChoiceType(COIN_TYPES), nullable=False)
+    timestamp = Column(DateTime, default=datetime.datetime.utcnow)
+    operation_type = Column(ChoiceType(OPERATION_TYPES), nullable=False)
+
+
 engine = create_engine('sqlite:///bitkonj.db')
 Base.metadata.bind = engine
 Base.metadata.create_all(engine)
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
-def create(price, last_buy, last_sell, last_action, coin='btc'):
+def init():
+    if session.query(Tick).count() == 0:
+        for i in range(10):
+            new_tick = Tick(price=0, coin='btc', direction='same')
+            session.add(new_tick)
+            session.commit()
+
+    if session.query(Order).count() == 0:
+        for i in range(3):
+            new_order = Order(price=0, coin='btc', operation_type='buy')
+            session.add(new_order)
+            session.commit()
+
+def tick(price, coin='btc'):
     action = 'SIT'
 
     try:
@@ -61,26 +89,55 @@ def create(price, last_buy, last_sell, last_action, coin='btc'):
     session.add(new_tick)
     session.commit()
 
-    if last_action == 'BUY' and abs(last_buy - price) < 100:
-        return price, coin, action, average_price
-
-    if last_action == 'SELL' and abs(last_sell - price) < 100:
-        return price, coin, action, average_price
-
+    # try:
+    #     last_ticks3 = session.query(Tick).all()[-3:-1]
+    #     last_op = session.query(Order).filter(Order.coin == 'btc')[-1].operation_type
+    #     if all(i.direction != 'rise' for i in last_ticks3) and direction == 'rise':
+    #         if last_op != 'buy':
+    #             action = 'BUY'
+    #             average_price = average_price
+    #     elif all(i.direction != 'drop' for i in last_ticks3) and direction == 'drop':
+    #         if last_op != 'sell':
+    #             action = 'SELL'
+    #             average_price = average_price
+    # except Exception as e:
+    #     pass
     try:
-        if last_tick.direction == 'drop' and direction == 'rise':
-            if last_sell > price:
-                action = 'BUY'
-            else:
-                if price - last_sell > 500:
-                    action = 'BUY'
-        elif last_tick.direction == 'rise' and direction == 'drop':
-            if last_buy < price:
+        last_order = session.query(Order).filter(Order.coin == 'btc')[-1]
+        if last_order.operation_type == 'buy':
+            if price - last_order.price > 100:
                 action = 'SELL'
-            else:
-                if last_buy - price > 500:
+            elif price - last_order.price < 0:
+                if last_order.price - average_price > 200:
                     action = 'SELL'
-    except Exception:
+        else:
+            if last_order.price - price > 100:
+                action = 'BUY'
+            elif last_order.price - price < 0:
+                if average_price - last_order.price > 200:
+                    action = 'BUY'
+    except Exception as e:
         pass
 
+    # if action == 'BUY':
+    #     try:
+    #         last_sell = session.query(Order).filter(Order.operation_type == 'sell')[-1]
+    #         if last_sell.price < price and average_price < last_sell.price:
+    #             action = 'SIT'
+    #     except Exception as e:
+    #         pass
+
+    # if action == 'SELL':
+    #     try:
+    #         last_buy = session.query(Order).filter(Order.operation_type == 'buy')[-1]
+    #         if last_buy.price > price and average_price > last_buy.price:
+    #             action = 'SIT'
+    #     except Exception as e:
+    #         pass
+
     return price, coin, action, average_price
+
+def order(price, coin, operation_type):
+    new_order = Order(price=price, coin=coin, operation_type=operation_type)
+    session.add(new_order)
+    session.commit()
