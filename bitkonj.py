@@ -5,7 +5,7 @@ from aiogram import Bot, Dispatcher, executor, types
 import aiohttp
 import requests
 import json
-from util import db, vars
+from util import db
 
 
 logging.basicConfig(level=logging.INFO)
@@ -23,6 +23,11 @@ headers = {
 
 bot = Bot(token=TELEGRAM_API_TOKEN)
 dp = Dispatcher(bot)
+last_action = 'BUY'
+last_buy = 1000
+last_sell = 100000
+btc_balance = 0.008
+usd_balance = 0
 
 
 def auth(func):
@@ -40,6 +45,7 @@ async def send_welcome(message: types.Message):
     await message.reply("Starting...")
 
 async def report():
+    global last_action, last_buy, last_sell, btc_balance, usd_balance
     db.init()
 
     # GET THE CURRENT PRICE FOR BITCOIN
@@ -52,7 +58,6 @@ async def report():
                                 params=params)
     except Exception:
         return False
-
     if response.status_code == 200:
         price = round(float(response.json()['price']))
     else:
@@ -62,31 +67,38 @@ async def report():
         )
         raise Exception(f"{response.status_code} error!")
 
-    price, coin, action, average_price = db.tick(price)
+    if last_buy == 0:
+        last_buy = price
+    if last_sell == 0:
+        last_sell = price
+    price, coin, action, average_price = db.tick(price, last_buy, last_sell, last_action)
 
-    if action == 'BUY':
-        vars.CURRENT_BTC_BALANCE = vars.CURRENT_USD_BALANCE / price
-        vars.CURRENT_USD_BALANCE = 0
+    if action == 'BUY' and last_action != 'BUY':
+        last_action = 'BUY'
+        last_buy = price
+        btc_balance = usd_balance / price
+        usd_balance = 0
         await bot.send_message(
             TELEGRAM_CHAT_ID,
-            f"{price} --- {average_price} --- {action} --- {vars.CURRENT_BTC_BALANCE}",
+            f"{price} --- {action} --- {btc_balance}",
             disable_notification=True
         )
-        db.order(price, coin, 'buy')
-    elif action == 'SELL':
-        vars.CURRENT_USD_BALANCE = vars.CURRENT_BTC_BALANCE * price
-        vars.CURRENT_BTC_BALANCE = 0
+
+    if action == 'SELL' and last_action != 'SELL':
+        last_action = 'SELL'
+        last_sell = price
+        usd_balance = btc_balance * price
+        btc_balance = 0
         await bot.send_message(
             TELEGRAM_CHAT_ID,
-            f"{price} --- {average_price} --- {action} --- {vars.CURRENT_USD_BALANCE}",
+            f"{price} --- {action} --- {usd_balance}",
             disable_notification=True
         )
-        db.order(price, coin, 'sell')
 
 async def run():
     while True:
         await report()
-        await asyncio.sleep(1)
+        await asyncio.sleep(5)
 
 
 if __name__ == '__main__':
