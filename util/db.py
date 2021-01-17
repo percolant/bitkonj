@@ -18,7 +18,13 @@ class Tick(Base):
     DIR_TYPES = [
         ('rise', 'rise'),
         ('drop', 'drop'),
-        ('same', 'same'),
+        ('same', 'same')
+    ]
+
+    OP_TYPES = [
+        ('SIT', 'SIT'),
+        ('BUY', 'BUY'),
+        ('SELL', 'SELL')
     ]
 
     __tablename__ = 'tick'
@@ -27,6 +33,7 @@ class Tick(Base):
     coin = Column(ChoiceType(COIN_TYPES), nullable=False)
     timestamp = Column(DateTime, default=datetime.datetime.utcnow)
     direction = Column(ChoiceType(DIR_TYPES), nullable=False)
+    op = Column(ChoiceType(OP_TYPES), nullable=False)
 
 engine = create_engine('sqlite:///bitkonj.db')
 Base.metadata.bind = engine
@@ -36,8 +43,8 @@ session = DBSession()
 
 def init():
     if session.query(Tick).count() == 0:
-        for i in range(10):
-            new_tick = Tick(price=0, coin='btc', direction='same')
+        for i in range(650):
+            new_tick = Tick(price=0, coin='btc', direction='same', op='SIT')
             session.add(new_tick)
             session.commit()
 
@@ -64,14 +71,14 @@ def tick(price, last_buy, last_sell, last_action, coin='btc'):
     except Exception as e:
         direction = 'same'
 
-    new_tick = Tick(price=price, coin=coin, direction=direction)
+    new_tick = Tick(price=price, coin=coin, direction=direction, op=action)
     session.add(new_tick)
     session.commit()
 
-    if last_action == 'BUY' and abs(last_buy - price) < 100:
+    if last_action == 'BUY' and abs(last_buy - price) < 20:
         return price, coin, action, average_price
 
-    if last_action == 'SELL' and abs(last_sell - price) < 100:
+    if last_action == 'SELL' and abs(last_sell - price) < 20:
         return price, coin, action, average_price
 
     try:
@@ -79,15 +86,34 @@ def tick(price, last_buy, last_sell, last_action, coin='btc'):
             if last_sell > price:
                 action = 'BUY'
             else:
-                if price - last_sell > 500:
-                    action = 'BUY'
+                try:
+                    last_ticks600 = session.query(Tick).order_by(Tick.timestamp.asc()).all()[-601:]
+                    if all(i.op == 'SIT' for i in last_ticks600) and abs(price - last_sell) > 100:
+                        action = 'BUY'
+                    elif all(i.op == 'SIT' for i in last_ticks600[-301:-1]) and abs(price - last_sell) > 200:
+                        action = 'BUY'
+                    else:
+                        action = 'FUCK'
+                except Exception:
+                    pass
         elif last_tick.direction == 'rise' and direction == 'drop':
             if last_buy < price:
                 action = 'SELL'
             else:
-                if last_buy - price > 500:
-                    action = 'SELL'
+                try:
+                    last_ticks600 = session.query(Tick).order_by(Tick.timestamp.asc()).all()[-601:]
+                    if all(i.op == 'SIT' for i in last_ticks600) and abs(last_buy.price - price) > 100:
+                        action = 'SELL'
+                    elif all(i.op == 'SIT' for i in last_ticks600[-301:-1]) and abs(last_buy.price - price) > 200:
+                        action = 'SELL'
+                    else:
+                        action = 'FUCK'
+                except Exception:
+                    pass
     except Exception:
         pass
+
+    new_tick.op = action
+    session.commit()
 
     return price, coin, action, average_price

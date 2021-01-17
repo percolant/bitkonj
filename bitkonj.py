@@ -98,7 +98,7 @@ async def report():
 async def run():
     while True:
         await report()
-        await asyncio.sleep(5)
+        await asyncio.sleep(1)
 
 
 if __name__ == '__main__':
