@@ -1,0 +1,7 @@
+setup.py
+src/bitkonj.egg-info/PKG-INFO
+src/bitkonj.egg-info/SOURCES.txt
+src/bitkonj.egg-info/dependency_links.txt
+src/bitkonj.egg-info/entry_points.txt
+src/bitkonj.egg-info/requires.txt
+src/bitkonj.egg-info/top_level.txt

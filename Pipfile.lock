@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "1a19f07d73cdb295bedb066d76f5cfbc3737bffed78d4574fea1815cfacfe3b9"
+            "sha256": "453c6c275f68635764c1743bd8d2495c0ddda184f2bda7e8a244c0afcbbaaa9a"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -90,6 +90,10 @@
             ],
             "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2, 3.3'",
             "version": "==2.9.0"
+        },
+        "bitkonj": {
+            "editable": true,
+            "path": "."
         },
         "certifi": {
             "hashes": [

@@ -1,0 +1,3 @@
+[console_scripts]
+bitkonj = bitkonj.bitkonj:main
+
