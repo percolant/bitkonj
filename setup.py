@@ -12,7 +12,8 @@ setup(
     'aiohttp',
     'sqlalchemy',
     'sqlalchemy-utils',
-    'requests'
+    'requests',
+    'typing_extensions'
   ],
   entry_points={
     'console_scripts': [

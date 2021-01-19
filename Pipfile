@@ -11,7 +11,8 @@ aiohttp = "*"
 sqlalchemy = "*"
 sqlalchemy-utils = "*"
 requests = "*"
-bitkonj = {editable = true, path = "."}
+bitkonj = {path = "."}
+typing-extensions = "*"
 
 [requires]
-python_version = "3.7"
+python_version = "3.8"
