@@ -1,3 +1,4 @@
 .env
 bitkonj.db
 __pycache__
+bitkonj.service
