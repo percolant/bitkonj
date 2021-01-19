@@ -6,7 +6,7 @@ After=syslog.target network.target
 User=percolant
 Group=sudo
 WorkingDirectory=/opt/bitkonj
-ExecStart=python ./bitkonj
+ExecStart=bash -c "bitkonj"
 
 [Install]
 WantedBy=multi-user.target
