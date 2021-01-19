@@ -48,6 +48,8 @@ async def start(message: types.Message):
     await message.reply("bitkonj started")
 
 async def run():
+    await bot.send_message(TELEGRAM_CHAT_ID, f"Started.")
+
     try:
         current_price = api.get_current_btc_price()
         tick_id = db.save_tick(price=current_price)
