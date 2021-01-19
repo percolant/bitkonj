@@ -4,7 +4,7 @@ setup(
   name='bitkonj',
   version='0.0.1',
   description='Bitkonj',
-  py_modules=['bitkonj'],
+  py_modules=['bitkonj.bitkonj', 'bitkonj.api', 'bitkonj.db'],
   packages=find_packages(include=['src', 'src.*']),
   package_dir={'': 'src'},
   install_requires=[
