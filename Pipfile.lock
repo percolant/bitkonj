@@ -1,11 +1,11 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "453c6c275f68635764c1743bd8d2495c0ddda184f2bda7e8a244c0afcbbaaa9a"
+            "sha256": "0c8e0205f5d341f2afeb190cb3155b02579d0f39de58b634b1253e37e694a02f"
         },
         "pipfile-spec": 6,
         "requires": {
-            "python_version": "3.7"
+            "python_version": "3.8"
         },
         "sources": [
             {
@@ -92,8 +92,8 @@
             "version": "==2.9.0"
         },
         "bitkonj": {
-            "editable": true,
-            "path": "."
+            "path": ".",
+            "version": "==0.0.0"
         },
         "certifi": {
             "hashes": [
@@ -240,7 +240,7 @@
                 "sha256:99d4073b617d30288f569d3f13d2bd7548c3a7e4c8de87db09a9d29bb3a4a60c",
                 "sha256:dafc7639cde7f1b6e1acc0f457842a83e722ccca8eef5270af2d74792619a89f"
             ],
-            "markers": "python_version < '3.8'",
+            "index": "pypi",
             "version": "==3.7.4.3"
         },
         "urllib3": {
