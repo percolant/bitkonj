@@ -70,7 +70,8 @@ async def run():
 
         if last_op_type == 'buy':
             # if price diff is < 20, skip
-            if abs(last_op_price - current_price) < 20:
+            # if abs(last_op_price - current_price) < 70:
+            if abs(last_op_price - current_price) < 200:
                 continue
 
             # if last buy price is < current price -> sell everything
@@ -106,7 +107,8 @@ async def run():
 
         if last_op_type == 'sell':
             # if price diff is < 20, skip
-            if abs(last_op_price - current_price) < 20:
+            # if abs(last_op_price - current_price) < 70:
+            if abs(last_op_price - current_price) < 200:
                 continue
 
             # if last sell price is > current price -> buy everything
@@ -140,7 +142,7 @@ async def run():
                         )
                         return False
 
-        await asyncio.sleep(1)
+        await asyncio.sleep(10)
 
 def main():
     # executor.start_polling(dp, skip_updates=True)
