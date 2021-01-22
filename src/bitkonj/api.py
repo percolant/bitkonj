@@ -17,7 +17,7 @@ headers = {
 
 def get_current_btc_price():
     params = {
-        'symbol': 'BTCUSDT'
+        'symbol': 'BTCEUR'
     }
     response = requests.get(BINANCE_BASEURL + '/api/v3/ticker/price',
                             headers=headers,
@@ -86,16 +86,21 @@ def sell_all_btc(price, tick_id):
     else:
         raise Exception(f"Code {response.status_code} from Binance")
 
-
 def long_time_no_action(tick_id, price):
-    if tick_id - db.get_last_op_id() > 600 \
-        and abs(db.get_last_op_price() - price) > 200:
-            return True
-    elif tick_id - db.get_last_op_id() > 300 \
-        and abs(db.get_last_op_price() - price) > 100:
-            return True
+    if db.get_last_op_type() == 'buy':
+        if tick_id - db.get_last_op_id() > 300 \
+            and abs(db.get_last_op_price() - price) > 2000:
+                return True
+
+        if tick_id - db.get_last_op_id() > 900 \
+            and abs(db.get_last_op_price() - price) > 1000:
+                return True
     else:
-        return False
+        if tick_id - db.get_last_op_id() > 1800 \
+            and abs(db.get_last_op_price() - price) > 2000:
+                return True
+
+    return False
 
 def get_server_time():
     URL = '/api/v3/time'
