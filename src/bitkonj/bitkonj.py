@@ -18,8 +18,6 @@ TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 BINANCE_API_KEY = os.getenv("BINANCE_API_KEY")
 BINANCE_API_SECRET = os.getenv("BINANCE_API_SECRET")
 BINANCE_BASEURL = 'https://api.binance.com'
-BTC_BALANCE = float(os.getenv("BTC_BALANCE"))
-USD_BALANCE = float(os.getenv("USD_BALANCE"))
 
 headers = {
     'X-MBX-APIKEY': BINANCE_API_KEY
