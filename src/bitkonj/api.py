@@ -19,13 +19,16 @@ def get_current_btc_price():
     params = {
         'symbol': 'BTCEUR'
     }
-    response = requests.get(BINANCE_BASEURL + '/api/v3/ticker/price',
-                            headers=headers,
-                            params=params)
+    try:
+        response = requests.get(BINANCE_BASEURL + '/api/v3/ticker/price',
+                                headers=headers,
+                                params=params)
+    except Exception:
+        raise Exception("5: request failed")
     if response.status_code == 200:
         return round(float(response.json()['price']))
     else:
-        raise Exception(f"Code {response.status_code} from Binance")
+        raise Exception(f"Code {response.status_code} from Binance. 5. {response.json()}")
 
 def buy_all_btc(price, tick_id):
     btc_balance, eur_balance = get_balance()
@@ -47,14 +50,18 @@ def buy_all_btc(price, tick_id):
         hashlib.sha256
     ).hexdigest()
 
-    response = requests.post(urljoin(BINANCE_BASEURL, URL),
-                             headers=headers,
-                             params=params)
+    try:
+        response = requests.post(urljoin(BINANCE_BASEURL, URL),
+                                 headers=headers,
+                                 params=params)
+    except Exception:
+        raise Exception("4: request failed")
     if response.status_code == 200:
-        db.save_order(price=price, op_type='sell', tick_id=tick_id)
-        return get_balance()
+        balance = get_balance()
+        db.save_order(price=price, op_type='buy', tick_id=tick_id)
+        return balance
     else:
-        raise Exception(f"Code {response.status_code} from Binance")
+        raise Exception(f"Code {response.status_code} from Binance. 4. {response.json()}")
 
 def sell_all_btc(price, tick_id):
     btc_balance, eur_balance = get_balance()
@@ -77,39 +84,50 @@ def sell_all_btc(price, tick_id):
         hashlib.sha256
     ).hexdigest()
 
-    response = requests.post(urljoin(BINANCE_BASEURL, URL),
-                             headers=headers,
-                             params=params)
+    try:
+        response = requests.post(urljoin(BINANCE_BASEURL, URL),
+                                 headers=headers,
+                                 params=params)
+    except Exception:
+        raise Exception("3: request failed")
     if response.status_code == 200:
+        balance = get_balance()
         db.save_order(price=price, op_type='sell', tick_id=tick_id)
-        return get_balance()
+        return balance
     else:
-        raise Exception(f"Code {response.status_code} from Binance")
+        raise Exception(f"Code {response.status_code} from Binance. 3. {response.json()}")
 
 def long_time_no_action(tick_id, price):
     if db.get_last_op_type() == 'buy':
-        if tick_id - db.get_last_op_id() > 300 \
+        if tick_id - db.get_last_op_tick_id() > 3000 \
             and abs(db.get_last_op_price() - price) > 2000:
                 return True
 
-        if tick_id - db.get_last_op_id() > 900 \
+        if tick_id - db.get_last_op_tick_id() > 9000 \
             and abs(db.get_last_op_price() - price) > 1000:
                 return True
-    else:
-        if tick_id - db.get_last_op_id() > 1800 \
+
+    if db.get_last_op_type() == 'sell':
+        if tick_id - db.get_last_op_tick_id() > 18000 \
             and abs(db.get_last_op_price() - price) > 2000:
                 return True
+
+        if tick_id - db.get_last_op_tick_id() > 36000:
+            return True
 
     return False
 
 def get_server_time():
     URL = '/api/v3/time'
-    response = requests.get(urljoin(BINANCE_BASEURL, URL),
-                            headers=headers)
+    try:
+        response = requests.get(urljoin(BINANCE_BASEURL, URL),
+                                headers=headers)
+    except Exception:
+        raise Exception("2: request failed")
     if response.status_code == 200:
         return response.json()['serverTime']
     else:
-        raise Exception(f"Code {response.status_code} from Binance")
+        raise Exception(f"Code {response.status_code} from Binance. 2. {response.json()}")
 
 def get_balance():
     URL = '/sapi/v1/capital/config/getall'
@@ -123,9 +141,12 @@ def get_balance():
         hashlib.sha256
     ).hexdigest()
 
-    response = requests.get(urljoin(BINANCE_BASEURL, URL),
-                            headers=headers,
-                            params=params)
+    try:
+        response = requests.get(urljoin(BINANCE_BASEURL, URL),
+                                headers=headers,
+                                params=params)
+    except Exception:
+        raise Exception("1: request failed")
     if response.status_code == 200:
         for i in response.json():
             if i['coin'] == 'BTC':
@@ -134,4 +155,4 @@ def get_balance():
                 eur_balance = i['free']
         return btc_balance, eur_balance
     else:
-        raise Exception(f"Code {response.status_code} from Binance")
+        raise Exception(f"Code {response.status_code} from Binance. 1. {response.json()}")
