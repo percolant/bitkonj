@@ -18,6 +18,8 @@ TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 BINANCE_API_KEY = os.getenv("BINANCE_API_KEY")
 BINANCE_API_SECRET = os.getenv("BINANCE_API_SECRET")
 BINANCE_BASEURL = 'https://api.binance.com'
+COIN = os.getenv("COIN")
+FIAT = os.getenv("FIAT")
 
 headers = {
     'X-MBX-APIKEY': BINANCE_API_KEY
@@ -25,8 +27,6 @@ headers = {
 
 bot = Bot(token=TELEGRAM_API_TOKEN)
 dp = Dispatcher(bot)
-
-RUNNING = False
 
 def auth(func):
 
@@ -41,104 +41,46 @@ def auth(func):
 @auth
 async def start(message: types.Message):
     """Not using this for now, find out how asyncio works"""
-    global RUNNING
-    RUNNING = True
     await message.reply("bitkonj started")
 
 async def run():
-    await bot.send_message(TELEGRAM_CHAT_ID, f"Started.")
-
-    try:
-        current_price = api.get_current_btc_price()
-        tick_id = db.save_tick(price=current_price)
-        db.save_order(
-            price=current_price,
-            op_type='buy',
-            tick_id=tick_id
-        )
-    except Exception as e:
-        await bot.send_message(TELEGRAM_CHAT_ID, f"Error: {e}. STOPPING!")
-        return False
+    await bot.send_message(TELEGRAM_CHAT_ID, f"{COIN}/{FIAT} Started. MACD strategy")
+    api.init_db()
 
     while True:
-        current_price = api.get_current_btc_price()
-        tick_id = db.save_tick(price=current_price)
-        last_op_type = db.get_last_op_type()
-        last_op_price = db.get_last_op_price()
-
-        if last_op_type == 'buy':
-            # if price diff is < 200, skip
-            if abs(last_op_price - current_price) < 200:
-                continue
-
-            # if last buy price is < current price -> sell everything
-            if last_op_price < current_price:
-                try:
-                    BTC_BALANCE, USD_BALANCE \
-                        = api.sell_all_btc(current_price, tick_id)
-                    await bot.send_message(
-                        TELEGRAM_CHAT_ID,
-                        f"Sold for {current_price}. Balance: {USD_BALANCE} USD."
-                    )
-                except Exception as e:
-                    await bot.send_message(
-                        TELEGRAM_CHAT_ID,
-                        f"Error: {e}. STOPPING!"
-                    )
-                    return False
-            else:
-                if api.long_time_no_action(tick_id, current_price):
-                    try:
-                        BTC_BALANCE, USD_BALANCE \
-                            = api.sell_all_btc(current_price, tick_id)
-                        await bot.send_message(
-                            TELEGRAM_CHAT_ID,
-                            f"Sold for {current_price}. Balance: {USD_BALANCE} USD."
-                        )
-                    except Exception as e:
-                        await bot.send_message(
-                            TELEGRAM_CHAT_ID,
-                            f"Error: {e}. STOPPING!"
-                        )
-                        return False
-
-        if last_op_type == 'sell':
-            # if price diff is < 200, skip
-            if abs(last_op_price - current_price) < 200:
-                continue
-
-            # if last sell price is > current price -> buy everything
-            if last_op_price > current_price:
-                try:
-                    BTC_BALANCE, USD_BALANCE \
-                        = api.buy_all_btc(current_price, tick_id)
-                    await bot.send_message(
-                        TELEGRAM_CHAT_ID,
-                        f"Bought for {current_price}. Balance: {BTC_BALANCE} BTC."
-                    )
-                except Exception as e:
-                    await bot.send_message(
-                        TELEGRAM_CHAT_ID,
-                        f"Error: {e}. STOPPING!"
-                    )
-                    return False
-            else:
-                if api.long_time_no_action(tick_id, current_price):
-                    try:
-                        BTC_BALANCE, USD_BALANCE \
-                            = api.buy_all_btc(current_price, tick_id)
-                        await bot.send_message(
-                            TELEGRAM_CHAT_ID,
-                            f"Bought for {current_price}. Balance: {BTC_BALANCE} BTC."
-                        )
-                    except Exception as e:
-                        await bot.send_message(
-                            TELEGRAM_CHAT_ID,
-                            f"Error: {e}. STOPPING!"
-                        )
-                        return False
-
-        await asyncio.sleep(10)
+        await asyncio.sleep(900)
+        price = api.get_current_price()
+        ma10pre = db.get_ma(10)
+        ma20pre = db.get_ma(20)
+        tick_id = db.save_tick(price=price)
+        ma10 = db.get_ma(10)
+        ma20 = db.get_ma(20)
+        ma50 = db.get_ma(50)
+        ma100 = db.get_ma(100)
+        ma200 = db.get_ma(200)
+        ma500 = db.get_ma(500)
+        if db.get_last_op_type() == 'buy':
+            if ma20 > ma500:
+                if ma20 > ma200:
+                    if ma20 > ma100:
+                        if ma20 > ma50:
+                            if ma20 > ma10 and ma10pre > ma20pre:
+                                await bot.send_message(
+                                    TELEGRAM_CHAT_ID,
+                                    f"SOLD {COIN} for {price} {FIAT}"
+                                )
+                                api.sell_all(price, tick_id)
+        else:
+            if ma20 < ma500:
+                if ma20 < ma200:
+                    if ma20 < ma100:
+                        if ma20 < ma50:
+                            if ma20 < ma10 and ma10pre < ma20pre:
+                                await bot.send_message(
+                                    TELEGRAM_CHAT_ID,
+                                    f"BOUGHT {COIN} for {price} {FIAT}"
+                                )
+                                api.buy_all(price, tick_id)
 
 def main():
     # executor.start_polling(dp, skip_updates=True)

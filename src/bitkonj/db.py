@@ -1,3 +1,4 @@
+import os
 import datetime
 from sqlalchemy import Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
@@ -6,6 +7,7 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
 
+COIN = os.getenv("COIN")
 Base = declarative_base()
 
 class Tick(Base):
@@ -23,7 +25,20 @@ class Order(Base):
                      nullable=False)
     tick = relationship('Tick')
 
-engine = create_engine('sqlite:///bitkonj.db')
+if COIN == 'BTC':
+    engine = create_engine('sqlite:///bitkonj_btc.db')
+elif COIN == 'ETH':
+    engine = create_engine('sqlite:///bitkonj_eth.db')
+elif COIN == 'AVAX':
+    engine = create_engine('sqlite:///bitkonj_avax.db')
+elif COIN == 'XRP':
+    engine = create_engine('sqlite:///bitkonj_xrp.db')
+elif COIN == 'DASH':
+    engine = create_engine('sqlite:///bitkonj_dash.db')
+elif COIN == 'LTC':
+    engine = create_engine('sqlite:///bitkonj_ltc.db')
+elif COIN == 'ADA':
+    engine = create_engine('sqlite:///bitkonj_ada.db')
 Base.metadata.bind = engine
 Base.metadata.create_all(engine)
 DBSession = sessionmaker(bind=engine)
@@ -68,5 +83,12 @@ def get_last_op_type():
 def get_last_op_price():
     try:
         return session.query(Order).all()[-1].price
+    except Exception:
+        return None
+
+def get_ma(ticks):
+    try:
+        prices = [i.price for i in session.query(Tick).all()[-(ticks + 1):-1]]
+        return sum(prices) / ticks
     except Exception:
         return None
