@@ -91,12 +91,16 @@ def buy_all(price, tick_id):
         hashlib.sha256
     ).hexdigest()
 
-    response = requests.post(urljoin(BINANCE_BASEURL, URL),
-                             headers=headers,
-                             params=params)
+    try:
+        response = requests.post(urljoin(BINANCE_BASEURL, URL),
+                                 headers=headers,
+                                 params=params)
+    except Exception:
+        raise Exception("4: request failed")
     if response.status_code == 200:
-        db.save_order(price=price, op_type='sell', tick_id=tick_id)
-        return get_balance()
+        balance = get_balance()
+        db.save_order(price=price, op_type='buy', tick_id=tick_id)
+        return balance
     else:
         raise Exception(f"Code {response.status_code} from Binance, {response.json()}")
 
@@ -135,19 +139,26 @@ def sell_all(price, tick_id):
         hashlib.sha256
     ).hexdigest()
 
-    response = requests.post(urljoin(BINANCE_BASEURL, URL),
-                             headers=headers,
-                             params=params)
+    try:
+        response = requests.post(urljoin(BINANCE_BASEURL, URL),
+                                 headers=headers,
+                                 params=params)
+    except Exception:
+        raise Exception("3: request failed")
     if response.status_code == 200:
+        balance = get_balance()
         db.save_order(price=price, op_type='sell', tick_id=tick_id)
-        return get_balance()
+        return balance
     else:
         raise Exception(f"Code {response.status_code} from Binance, {response.json()}")
 
 def get_server_time():
     URL = '/api/v3/time'
-    response = requests.get(urljoin(BINANCE_BASEURL, URL),
-                            headers=headers)
+    try:
+        response = requests.get(urljoin(BINANCE_BASEURL, URL),
+                                headers=headers)
+    except Exception:
+        raise Exception("2: request failed")
     if response.status_code == 200:
         return response.json()['serverTime']
     else:
@@ -165,9 +176,12 @@ def get_balance():
         hashlib.sha256
     ).hexdigest()
 
-    response = requests.get(urljoin(BINANCE_BASEURL, URL),
-                            headers=headers,
-                            params=params)
+    try:
+        response = requests.get(urljoin(BINANCE_BASEURL, URL),
+                                headers=headers,
+                                params=params)
+    except Exception:
+        raise Exception("1: request failed")
     if response.status_code == 200:
         for i in response.json():
             if i['coin'] == COIN:
