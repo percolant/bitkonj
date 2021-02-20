@@ -39,6 +39,8 @@ elif COIN == 'LTC':
     engine = create_engine('sqlite:///bitkonj_ltc.db')
 elif COIN == 'ADA':
     engine = create_engine('sqlite:///bitkonj_ada.db')
+elif COIN == 'SC':
+    engine = create_engine('sqlite:///bitkonj_sc.db')
 Base.metadata.bind = engine
 Base.metadata.create_all(engine)
 DBSession = sessionmaker(bind=engine)

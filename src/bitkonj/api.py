@@ -123,6 +123,8 @@ def sell_all(price, tick_id):
         cr_balance = int(float(cr_balance) * (10 ** 5)) / (10 ** 5)
     elif COIN == 'ADA':
         cr_balance = int(float(cr_balance) * (10 ** 1)) / (10 ** 1)
+    elif COIN == 'SC':
+        cr_balance = int(float(cr_balance))
 
     params = {
         'symbol': f"{COIN}{FIAT}",

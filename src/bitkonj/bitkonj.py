@@ -57,30 +57,24 @@ async def run():
         ma20 = db.get_ma(20)
         ma50 = db.get_ma(50)
         ma100 = db.get_ma(100)
-        ma200 = db.get_ma(200)
-        ma500 = db.get_ma(500)
         if db.get_last_op_type() == 'buy':
-            if ma20 > ma500:
-                if ma20 > ma200:
-                    if ma20 > ma100:
-                        if ma20 > ma50:
-                            if ma20 > ma10 and ma10pre > ma20pre:
-                                await bot.send_message(
-                                    TELEGRAM_CHAT_ID,
-                                    f"SOLD {COIN} for {price} {FIAT}"
-                                )
-                                api.sell_all(price, tick_id)
+            if ma20 > ma100:
+                if ma20 > ma50:
+                    if ma20 > ma10 and ma10pre > ma20pre:
+                        await bot.send_message(
+                            TELEGRAM_CHAT_ID,
+                            f"SOLD {COIN} for {price} {FIAT}"
+                        )
+                        api.sell_all(price, tick_id)
         else:
-            if ma20 < ma500:
-                if ma20 < ma200:
-                    if ma20 < ma100:
-                        if ma20 < ma50:
-                            if ma20 < ma10 and ma10pre < ma20pre:
-                                await bot.send_message(
-                                    TELEGRAM_CHAT_ID,
-                                    f"BOUGHT {COIN} for {price} {FIAT}"
-                                )
-                                api.buy_all(price, tick_id)
+            if ma20 < ma100:
+                if ma20 < ma50:
+                    if ma20 < ma10 and ma10pre < ma20pre:
+                        await bot.send_message(
+                            TELEGRAM_CHAT_ID,
+                            f"BOUGHT {COIN} for {price} {FIAT}"
+                        )
+                        api.buy_all(price, tick_id)
 
 def main():
     # executor.start_polling(dp, skip_updates=True)
